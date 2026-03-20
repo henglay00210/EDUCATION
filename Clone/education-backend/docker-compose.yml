@@ -1,0 +1,60 @@
+services:
+  auth_service:
+    image: backend-auth-service:latest
+    build:
+      context: .
+    container_name: auth_service
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5002:8080"
+    env_file:
+      - .env
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/education_app
+      PGHOST: postgres
+      PGPORT: 5432
+      PGDATABASE: education_app
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      LOG_SQL: "true"
+
+  postgres:
+    image: postgres:16
+    container_name: education_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: education_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: education_pgadmin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+
+  webadmin:
+    build:
+      context: ./webadmin
+    container_name: education_webadmin
+    restart: unless-stopped
+    depends_on:
+      - auth_service
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres_data:

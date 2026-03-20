@@ -1,0 +1,25 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "list-mongo-collections-clean",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"-e",
+				"require('dotenv').config(); const mongoose=require('mongoose'); (async()=>{ try{ await mongoose.connect(process.env.MONGODB_URI); const cols=await mongoose.connection.db.listCollections().toArray(); console.log('DB_OK'); console.log('Collections:', cols.length ? cols.map(c=>c.name).join(', ') : 'none'); } catch(e){ console.error('DB_ERROR', e.message); process.exitCode=1; } finally { await mongoose.disconnect(); } })();"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "install-postgres-deps-clean",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"npm install"
+			],
+			"isBackground": false
+		}
+	]
+}

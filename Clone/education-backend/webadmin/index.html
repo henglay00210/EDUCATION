@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Education Admin</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Education Admin Panel</h1>
+      <div class="topbar-actions">
+        <input id="adminKey" placeholder="Admin Key" type="password" />
+        <button id="connectBtn">Connect</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="courses">Courses</button>
+      <button class="tab" data-tab="mentors">Mentors</button>
+      <button class="tab" data-tab="members">Members</button>
+    </nav>
+
+    <main>
+      <section id="courses" class="panel active"></section>
+      <section id="mentors" class="panel"></section>
+      <section id="members" class="panel"></section>
+    </main>
+
+    <template id="tableTemplate">
+      <div class="card">
+        <h2></h2>
+        <div class="toolbar">
+          <button class="refreshBtn">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,260 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "terminal-health-check",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Write-Output 'task_ok'"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "terminal-verify-noprofile",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Write-Output 'terminal_fixed'; Get-Location | Select-Object -ExpandProperty Path"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check-mongosh",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"if (Get-Command mongosh -ErrorAction SilentlyContinue) { mongosh --version } else { Write-Output 'MONGOSH_NOT_FOUND' }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "list-mongo-collections",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; node -e \"require('dotenv').config(); const mongoose=require('mongoose'); (async()=>{ try{ await mongoose.connect(process.env.MONGODB_URI); const cols=await mongoose.connection.db.listCollections().toArray(); console.log('DB_OK'); console.log('Collections:', cols.map(c=>c.name).join(', ') || '(none)'); }catch(e){ console.error('DB_ERROR', e.message); process.exitCode=1; } finally { await mongoose.disconnect(); } })();\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-db-check-script",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"education-backend/scripts/db_check.js"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "run-db-check-script-2",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"education-backend/scripts/db_check.js"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker-check",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"docker --version; docker compose version"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker-up-mongo",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose up -d; docker compose ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker-ps-check",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker-up-retry",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose up -d"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker-pull-mongo",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"docker pull mongo:7"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "docker-images-check",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"docker images --format \"table {{.Repository}}\\t{{.Tag}}\\t{{.ID}}\" | Select-String -Pattern \"mongo|REPOSITORY\""
+			],
+			"isBackground": false
+		},
+		{
+			"label": "seed-docker-mongo",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; node seed.js"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "install-postgres-deps",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; npm install"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "install-postgres-deps-clean-2",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"cd /d c:\\Users\\ASUS\\Desktop\\Clone\\education-backend && npm install"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "start-postgres-stack",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose up -d; docker compose ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "check-postgres-ps",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "remove-mongo-orphans",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose up -d --remove-orphans; docker compose ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "final-compose-ps",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; docker compose ps"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "seed-postgres",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"Set-Location 'c:\\Users\\ASUS\\Desktop\\Clone\\education-backend'; node seed.js"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "kill-port-5000",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"$pid = (Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess); if ($pid) { Stop-Process -Id $pid -Force; Write-Output ('KILLED_PID=' + $pid) } else { Write-Output 'NO_PROCESS_ON_5000' }"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "postgres-auth-smoke",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoLogo",
+				"-NoProfile",
+				"-Command",
+				"$email = ('pgtest_' + [guid]::NewGuid().ToString('N').Substring(0,8) + '@example.com'); $registerBody = @{name='PG Test'; email=$email; password='password123'} | ConvertTo-Json; $reg = Invoke-RestMethod -Uri 'http://localhost:5001/api/auth/register' -Method Post -ContentType 'application/json' -Body $registerBody; $loginBody = @{email=$email; password='password123'} | ConvertTo-Json; $login = Invoke-RestMethod -Uri 'http://localhost:5001/api/auth/login' -Method Post -ContentType 'application/json' -Body $loginBody; Write-Output ('REGISTER_ID=' + $reg.user.id); Write-Output ('LOGIN_TOKEN_LEN=' + $login.token.Length)"
+			],
+			"isBackground": false
+		}
+	]
+}
