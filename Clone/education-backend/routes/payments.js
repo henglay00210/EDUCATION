@@ -7,23 +7,85 @@ const router = express.Router();
 const isBakongEnabled =
   `${process.env.BAKONG_ENABLED || ""}`.toLowerCase() === "true";
 
-const buildMockKhqrPayload = ({ transactionId, amount, currency }) =>
-  `bakong-khqr://pay?tran_id=${encodeURIComponent(
-    transactionId
-  )}&amount=${encodeURIComponent(amount)}&currency=${encodeURIComponent(
-    currency
-  )}`;
+const KHQR_GUI = "A000000677010111";
 
-const tryCreateBakongKhqr = async ({ transactionId, amount, currency }) => {
+const tag = (id, value) => {
+  const text = `${value || ""}`;
+  return `${id}${String(text.length).padStart(2, "0")}${text}`;
+};
+
+const crc16Ccitt = (input) => {
+  let crc = 0xffff;
+  for (let i = 0; i < input.length; i += 1) {
+    crc ^= input.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j += 1) {
+      if ((crc & 0x8000) !== 0) {
+        crc = ((crc << 1) ^ 0x1021) & 0xffff;
+      } else {
+        crc = (crc << 1) & 0xffff;
+      }
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+};
+
+const buildLocalKhqrPayload = ({
+  transactionId,
+  amount,
+  currency,
+  merchantId,
+}) => {
+  const safeMerchantId = `${merchantId || ""}`.trim();
+  const safeMerchantName = `${process.env.KHQR_MERCHANT_NAME || "AngkorEdu"}`
+    .trim()
+    .slice(0, 25);
+  const safeCity = `${process.env.KHQR_MERCHANT_CITY || "Phnom Penh"}`
+    .trim()
+    .slice(0, 15);
+  const numericCurrency = `${currency}`.toUpperCase() === "KHR" ? "116" : "840";
+
+  const merchantAccountInfo = tag("00", KHQR_GUI) + tag("01", safeMerchantId);
+
+  const additionalData = tag("01", `${transactionId}`.slice(0, 25));
+
+  let payload = "";
+  payload += tag("00", "01");
+  payload += tag("01", "12");
+  payload += tag("29", merchantAccountInfo);
+  payload += tag("52", "0000");
+  payload += tag("53", numericCurrency);
+  payload += tag("54", Number(amount).toFixed(2));
+  payload += tag("58", "KH");
+  payload += tag("59", safeMerchantName);
+  payload += tag("60", safeCity);
+  payload += tag("62", additionalData);
+  payload += "6304";
+
+  return payload + crc16Ccitt(payload);
+};
+
+const tryCreateBakongKhqr = async ({
+  transactionId,
+  amount,
+  currency,
+  merchantIdOverride,
+}) => {
   const baseUrl = `${process.env.BAKONG_API_BASE_URL || ""}`.trim();
   const apiKey = `${process.env.BAKONG_API_KEY || ""}`.trim();
-  const merchantId = `${process.env.BAKONG_MERCHANT_ID || ""}`.trim();
+  const merchantId = `${
+    merchantIdOverride || process.env.BAKONG_MERCHANT_ID || ""
+  }`.trim();
 
   if (!isBakongEnabled || !baseUrl || !apiKey || !merchantId) {
     return {
-      integrationMode: "mock",
+      integrationMode: "local-khqr",
       providerPaymentId: null,
-      khqrPayload: buildMockKhqrPayload({ transactionId, amount, currency }),
+      khqrPayload: buildLocalKhqrPayload({
+        transactionId,
+        amount,
+        currency,
+        merchantId,
+      }),
     };
   }
 
@@ -68,7 +130,22 @@ const tryCreateBakongKhqr = async ({ transactionId, amount, currency }) => {
 
 router.post("/khqr/create", async (req, res) => {
   try {
-    const { courseId, amount, currency = "USD" } = req.body;
+    const {
+      courseId,
+      amount,
+      currency = "USD",
+      merchantId,
+      merchantIds,
+    } = req.body;
+
+    const requestedMerchantId = `${
+      merchantId ||
+      (Array.isArray(merchantIds)
+        ? merchantIds[0]
+        : typeof merchantIds === "string"
+        ? merchantIds
+        : "")
+    }`.trim();
 
     if (!courseId || !amount) {
       return res
@@ -103,6 +180,7 @@ router.post("/khqr/create", async (req, res) => {
         transactionId,
         amount: numericAmount,
         currency,
+        merchantIdOverride: requestedMerchantId,
       });
       providerPaymentId = bakong.providerPaymentId;
       khqrPayload = bakong.khqrPayload;
@@ -192,12 +270,10 @@ router.get("/:transactionId/status", async (req, res) => {
       createdAt: tx.created_at,
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({
-        message: "Failed to check payment status",
-        error: error.message,
-      });
+    return res.status(500).json({
+      message: "Failed to check payment status",
+      error: error.message,
+    });
   }
 });
 

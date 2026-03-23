@@ -8,8 +8,48 @@ const tabButtons = document.querySelectorAll(".tab");
 const panels = document.querySelectorAll(".panel");
 const adminKeyInput = document.getElementById("adminKey");
 const connectBtn = document.getElementById("connectBtn");
+const statusBar = document.getElementById("statusBar");
+
+const PROGRAMMING_WEB_FALLBACK =
+  "https://via.placeholder.com/160x96.png?text=Programming+Web+Course";
+const GENERIC_COURSE_FALLBACK =
+  "https://via.placeholder.com/160x96.png?text=Course+Image";
 
 adminKeyInput.value = state.key;
+
+const setStatus = (message, type = "info") => {
+  statusBar.textContent = message;
+  statusBar.className = `status ${type}`;
+};
+
+const escapeHtml = (value) =>
+  `${value ?? ""}`
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const getCourseImage = (row) => {
+  const explicit = `${row.thumbnail || ""}`.trim();
+  if (explicit) return explicit;
+
+  const hint = `${row.category || ""} ${row.title || ""}`.toLowerCase();
+  if (hint.includes("program") || hint.includes("web")) {
+    return PROGRAMMING_WEB_FALLBACK;
+  }
+
+  return GENERIC_COURSE_FALLBACK;
+};
+
+const renderCourseImage = (_, row) => {
+  const src = getCourseImage(row);
+  const safeSrc = escapeHtml(src);
+  const safeFallback = escapeHtml(PROGRAMMING_WEB_FALLBACK);
+  const safeAlt = escapeHtml(`${row.title || "Course"} image`);
+
+  return `<img class="course-thumb" src="${safeSrc}" alt="${safeAlt}" onerror="this.onerror=null;this.src='${safeFallback}'" />`;
+};
 
 const headers = () => ({
   "Content-Type": "application/json",
@@ -88,6 +128,16 @@ const renderTablePanel = ({ panelId, title, columns, rows, onRefresh }) => {
     tbody.appendChild(tr);
   });
 
+  if (!rows.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = columns.length + 1;
+    td.className = "empty-state";
+    td.textContent = "No records found.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  }
+
   panel.appendChild(root);
 };
 
@@ -98,9 +148,11 @@ const cEdit = async (panelId, row, onRefresh) => {
       if (title == null) return;
       const category = prompt("Category", row.category);
       if (category == null) return;
+      const thumbnail = prompt("Picture URL", row.thumbnail || "");
+      if (thumbnail == null) return;
       await request(`/courses/${row.id}`, {
         method: "PUT",
-        body: JSON.stringify({ title, category }),
+        body: JSON.stringify({ title, category, thumbnail }),
       });
     } else if (panelId === "mentors") {
       const name = prompt("Mentor name", row.name);
@@ -153,6 +205,7 @@ const loadCourses = async () => {
     rows,
     columns: [
       { key: "id", label: "ID" },
+      { key: "thumbnail", label: "Picture", render: renderCourseImage },
       { key: "title", label: "Title" },
       { key: "category", label: "Category" },
       { key: "mentorName", label: "Mentor" },
@@ -205,8 +258,14 @@ const loadMembers = async () => {
 
 const loadAll = async () => {
   try {
+    setStatus("Loading admin data...", "info");
     await Promise.all([loadCourses(), loadMentors(), loadMembers()]);
+    setStatus(
+      "Connected. You can now manage courses, mentors, and members.",
+      "success"
+    );
   } catch (e) {
+    setStatus(e.message || "Failed to load admin data", "error");
     alert(e.message);
   }
 };
@@ -214,6 +273,12 @@ const loadAll = async () => {
 connectBtn.onclick = async () => {
   state.key = adminKeyInput.value.trim();
   localStorage.setItem("adminKey", state.key);
+
+  if (!state.key) {
+    setStatus("Please enter your admin key before connecting.", "error");
+    return;
+  }
+
   await loadAll();
 };
 
@@ -222,5 +287,8 @@ tabButtons.forEach((btn) => {
 });
 
 if (state.key) {
+  setStatus("Saved admin key found. Loading data...", "info");
   loadAll();
+} else {
+  setStatus("Enter your admin key and click Connect.", "info");
 }
